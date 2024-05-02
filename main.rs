@@ -6,7 +6,7 @@ use std::collections::{VecDeque};
 
 fn read_file(path: &str) -> Vec<(usize, usize)> {
     //define graph vector
-    let mut graphvec: Vec<(usize, usize)> = Vec::new();
+    let mut graphvector: Vec<(usize, usize)> = Vec::new();
     //file and reader
     let file = File::open(path).expect("Cant open");
     let reader = BufReader::new(file).lines();
@@ -16,9 +16,9 @@ fn read_file(path: &str) -> Vec<(usize, usize)> {
         let nodes: Vec<&str> = linemsg.trim().split(' ').collect();
         let n1: usize = nodes[0].parse::<usize>().unwrap();
         let n2: usize = nodes[1].parse::<usize>().unwrap();
-        graphvec.push((n1, n2));
+        graphvector.push((n1, n2));
     }
-    return graphvec;
+    return graphvector;
 }
 //create graph
 fn create_graph(twitter_data: Vec<(usize, usize)>) -> HashMap<usize, HashSet<usize>> {
@@ -42,22 +42,22 @@ fn page_rank(graph: &HashMap<usize, HashSet<usize>>, damping: f64, iterations: u
     }
     //for each iteration new tanks into a new hashmap
     for _ in 0..iterations {
-        let mut new_ranks: HashMap<usize, f64> = HashMap::new();
+        let mut assign_ranks: HashMap<usize, f64> = HashMap::new();
         //for each node and edge calculate rank
         for (node, edges) in graph {
-            let outgoing_rank = ranks[node] / edges.len() as f64;
+            let new_ranks = ranks[node] / edges.len() as f64;
         
             for edge in edges {
-                *new_ranks.entry(*edge).or_insert(0.0) += damping * outgoing_rank;
+                *assign_ranks.entry(*edge).or_insert(0.0) += damping * new_ranks;
             }
         }
         
-        let s: f64 = new_ranks.values().sum();
-        for rank in new_ranks.values_mut() {
+        let s: f64 = assign_ranks.values().sum();
+        for rank in assign_ranks.values_mut() {
             *rank += (1.0 - s) / num_nodes;
         }
 
-        ranks = new_ranks;
+        ranks = assign_ranks;
     }
 
     ranks
@@ -95,8 +95,8 @@ fn sixdegrees(graph: &HashMap<usize, HashSet<usize>>, start: usize) -> HashMap<u
     //depth conditions for degree calculuation
     while let Some((node, depth)) = queue.pop_front() {
         if depth < 6 {
-            if let Some(neighbors) = graph.get(&node) {
-                for &neighbor in neighbors {
+            if let Some(neighbor_nodes) = graph.get(&node) {
+                for &neighbor in neighbor_nodes {
                     if !degrees.contains_key(&neighbor) {
                         queue.push_back((neighbor, depth + 1));
                         degrees.insert(neighbor, depth + 1);
@@ -120,8 +120,8 @@ fn bfs(graph: &HashMap<usize, HashSet<usize>>, start: usize) {
     while let Some(node) = line.pop_front() {
         println!("{}", node);
         //neighbor conditons
-        if let Some(neighbors) = graph.get(&node) {
-            for &neighbor in neighbors {
+        if let Some(neighbor_nodes) = graph.get(&node) {
+            for &neighbor in neighbor_nodes {
                 if !visit_history.contains(&neighbor) {
                     visit_history.insert(neighbor);
                     line.push_back(neighbor);
