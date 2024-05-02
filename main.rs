@@ -4,7 +4,6 @@ use std::io::{BufRead, BufReader};
 use std::collections::HashSet;
 use std::collections::{VecDeque};
 
-
 fn read_file(path: &str) -> Vec<(usize, usize)> {
     let mut graphvec: Vec<(usize, usize)> = Vec::new();
     let file = File::open(path).expect("Cant open");
@@ -70,8 +69,8 @@ fn friends_of_friends(graph: &HashMap<usize, HashSet<usize>>, user_id: usize) ->
         for &friend in friends {
             if let Some(friends_of_friend) = graph.get(&friend) {
                 for &f_o_f in friends_of_friend {
-                    if fof != user_id && !friends.contains(&f_o_f) {
-                        friends_of_friends.insert(fof);
+                    if f_o_f != user_id && !friends.contains(&f_o_f) {
+                        friends_of_friends.insert(f_o_f);
                     }
                 }
             }
@@ -103,7 +102,27 @@ fn sixdegrees(graph: &HashMap<usize, HashSet<usize>>, start: usize) -> HashMap<u
 
     degrees
 }
-// closeness centrality
+// bfs
+fn bfs(graph: &HashMap<usize, HashSet<usize>>, start: usize) {
+    let mut visit_history: HashSet<usize> = HashSet::new();
+    let mut line = VecDeque::new();
+
+    visit_history.insert(start);
+    line.push_back(start);
+
+    while let Some(node) = line.pop_front() {
+        println!("{}", node);
+
+        if let Some(neighbors) = graph.get(&node) {
+            for &neighbor in neighbors {
+                if !visit_history.contains(&neighbor) {
+                    visit_history.insert(neighbor);
+                    line.push_back(neighbor);
+                }
+            }
+        }
+    }
+}
 
 
 
@@ -113,20 +132,25 @@ fn main() {
     let graph = create_graph(twitter_graph);
 
     let ranks = page_rank(&graph, 0.85, 100);
-    for (node, rank) in &ranks {
+    println!("Top 10 nodes by PageRank:");
+    for (node, rank) in ranks.iter().take(10) {
         println!("Node: {}, Rank: {}", node, rank);
     } 
-
-    let user_id = 14804766; // replace with your user ID
+  
+    let user_id = 14804766; 
     let mutuals = friends_of_friends(&graph, user_id);
-    for f_o_f in &mutuals {
+    println!("Top 10 friends of friends:");
+    for f_o_f in mutuals.iter().take(10) {
         println!("Friend of friend: {}", f_o_f);
     }
-    
+    println!("Six Degrees");
     let user_id = 14804766;
     let degrees = sixdegrees(&graph, user_id);
-    for (user, degree) in &degrees {
+    for (user, degree) in degrees.iter().take(10) {
         println!("User: {}, Degree: {}", user, degree);
     }
-}
 
+   
+    bfs(&graph,0);
+    
+}
